@@ -35,7 +35,12 @@ jobs:
           sed -i 's/^CONFIG_SND_SOC_SAMSUNG_ABOX=y/# CONFIG_SND_SOC_SAMSUNG_ABOX is not set/' exynos980-a51x_defconfig
           sed -i 's/^CONFIG_SND_SOC_SAMSUNG_VTS=y/# CONFIG_SND_SOC_SAMSUNG_VTS is not set/' exynos980-a51x_defconfig
           sed -i 's/^CONFIG_SND_SOC_SAMSUNG_MAILBOX=y/# CONFIG_SND_SOC_SAMSUNG_MAILBOX is not set/' exynos980-a51x_defconfig
-          grep -n 'ABOX' exynos980-a51x_defconfig || true
+          sed -i 's/^CONFIG_RADIO_S610=y/# CONFIG_RADIO_S610 is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_RADIO_S5E9630=y/# CONFIG_RADIO_S5E9630 is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_SND_SOC_TAS2562=y/# CONFIG_SND_SOC_TAS2562 is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_TAS2562_REGMAP=y/# CONFIG_TAS2562_REGMAP is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_TAS2562_CODEC=y/# CONFIG_TAS2562_CODEC is not set/' exynos980-a51x_defconfig
+          grep -n 'ABOX\|TAS2562\|RADIO_S610' exynos980-a51x_defconfig || true
           grep -n 'LOCALVERSION\|SUPPORT_DDI_FLASH\|SUPPORT_POC_FLASH' exynos980-a51x_defconfig
           cd ../../..
           python3 - <<'PYEOF'

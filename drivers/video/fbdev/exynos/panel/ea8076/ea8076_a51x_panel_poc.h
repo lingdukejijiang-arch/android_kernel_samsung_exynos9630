@@ -1,5 +1,5 @@
 /*
- * drivers/video/fbdev/exynos/panel/ea8076/ea8076_a51x_panel_poc.h
+ * linux/drivers/video/fbdev/exynos/panel/ea8076/ea8076_a51x_panel_poc.h
  *
  * POC (Panel burn-in Compensation flash) driver data for EA8076_A51X panel.
  *
@@ -97,11 +97,11 @@ static DEFINE_STATIC_PACKET(ea8076_poc_key3_enable_pkt, DSI_PKT_TYPE_WR, EA8076_
 static DEFINE_STATIC_PACKET(ea8076_poc_key3_disable_pkt, DSI_PKT_TYPE_WR, EA8076_POC_KEY3_DISABLE, 0);
 static DEFINE_STATIC_PACKET(ea8076_poc_write_gp_pkt, DSI_PKT_TYPE_WR, EA8076_POC_WRITE_GP, 0);
 
-static DEFINE_PKTUI(ea8076_poc_wr_dat, &ea8076_a51x_poc_maptbl[EA8076_POC_WR_DATA_MAPTBL], 1);
+static DEFINE_PKTUI(ea8076_poc_wr_dat_pkt, &ea8076_a51x_poc_maptbl[EA8076_POC_WR_DATA_MAPTBL], 1);
 static DEFINE_VARIABLE_PACKET(ea8076_poc_wr_dat_pkt, DSI_PKT_TYPE_WR, EA8076_POC_WR_DAT, 0);
-static DEFINE_PKTUI(ea8076_poc_wr_addr, &ea8076_a51x_poc_maptbl[EA8076_POC_WR_ADDR_MAPTBL], 1);
+static DEFINE_PKTUI(ea8076_poc_wr_addr_pkt, &ea8076_a51x_poc_maptbl[EA8076_POC_WR_ADDR_MAPTBL], 1);
 static DEFINE_VARIABLE_PACKET(ea8076_poc_wr_addr_pkt, DSI_PKT_TYPE_WR, EA8076_POC_WR_ADDR, 0);
-static DEFINE_PKTUI(ea8076_poc_wr_addr_or1, &ea8076_a51x_poc_maptbl[EA8076_POC_WR_ADDR_OR1_MAPTBL], 1);
+static DEFINE_PKTUI(ea8076_poc_wr_addr_or1_pkt, &ea8076_a51x_poc_maptbl[EA8076_POC_WR_ADDR_OR1_MAPTBL], 1);
 static DEFINE_VARIABLE_PACKET(ea8076_poc_wr_addr_or1_pkt, DSI_PKT_TYPE_WR, EA8076_POC_WR_ADDR_OR1, 0);
 
 static DEFINE_PANEL_MDELAY(ea8076_poc_wait_10ms, 10);

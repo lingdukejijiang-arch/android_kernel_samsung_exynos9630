@@ -67,9 +67,10 @@ jobs:
           export ARCH=arm64
           export CROSS_COMPILE=$HOME/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-
           export CLANG_TRIPLE=aarch64-linux-gnu-
-          export PATH=$HOME/toolchain/clang/bin:$PATH
-          make CC=clang exynos980-a51x_defconfig
-          make CC=clang -j$(nproc)
+          # gcc 4.9 bin 必须进 PATH: clang 靠它在 PATH 里探测 aarch64 gcc 工具链,否则退化到宿主 as 报 -EL 错
+          export PATH=$HOME/toolchain/clang/bin:$HOME/toolchain/aarch64-linux-android-4.9/bin:$PATH
+          make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- exynos980-a51x_defconfig
+          make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- -j$(nproc)
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

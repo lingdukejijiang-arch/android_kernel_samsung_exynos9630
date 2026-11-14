@@ -49,6 +49,8 @@ jobs:
           grep -n 'ABOX\|TAS2562\|RADIO_S610\|AUD3003X\|SND_SOC_SAMSUNG_AUDIO' exynos980-a51x_defconfig || true
           grep -n 'LOCALVERSION\|SUPPORT_DDI_FLASH\|SUPPORT_POC_FLASH' exynos980-a51x_defconfig
           cd ../../..
+          sed -i 's/phys_addr_t addr, size_t bytes, void \*addr)/phys_addr_t addr, size_t bytes, void *vaddr)/' include/sound/samsung/abox.h
+          grep -n 'void \*vaddr)' include/sound/samsung/abox.h
           python3 - <<'PYEOF'
           p = 'kernel/module.c'
           s = open(p).read()

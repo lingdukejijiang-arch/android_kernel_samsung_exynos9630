@@ -73,6 +73,21 @@ jobs:
           PYEOF
           grep -n 'ea8076_a51x_panel_poc.h\|poc_data' ea8076_a51x_panel.h
 
+      - name: Neutralize upstream-disabled frt tracepoint calls
+        run: |
+          cd kernel/sched/ems
+          python3 - <<'PYEOF'
+          p = 'frt.c'
+          s = open(p).read()
+          old = 'trace_frt_load_rt_rq(rt_rq);'
+          new = '/* tracepoint 上游被 #if 0 关闭(ems.h),调用点同步置空 */'
+          n = s.count(old)
+          assert n == 4, f'expected 4 call sites, found {n}'
+          s = s.replace(old, new)
+          open(p, 'w').write(s)
+          print(f'neutralized {n} call sites')
+          PYEOF
+
       - name: Build kernel
         run: |
           export ARCH=arm64

@@ -124,7 +124,7 @@ jobs:
           which aarch64-linux-android-elfedit || ln -sf /usr/bin/elfedit $HOME/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-elfedit
           export KCFLAGS="-Wno-gnu-variable-sized-type-not-at-end"
           make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 exynos980-a51x_defconfig
-          make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 KCFLAGS="-Wno-error=unused-function -Wno-error=unused-variable" -j$(nproc)
+          make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 KCFLAGS="-Wno-gnu-variable-sized-type-not-at-end -Wno-error=unused-function -Wno-error=unused-variable" -j$(nproc)
           echo "=== utsrelease check ==="
           strings arch/arm64/boot/Image | grep -m3 "4.19" || true
 

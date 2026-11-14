@@ -32,6 +32,12 @@ jobs:
           sed -i 's/^# CONFIG_SUPPORT_DDI_FLASH is not set/CONFIG_SUPPORT_DDI_FLASH=y\nCONFIG_SUPPORT_POC_FLASH=y/' exynos980-a51x_defconfig
           grep -n 'SUPPORT_DDI_FLASH\|SUPPORT_POC_FLASH' exynos980-a51x_defconfig
 
+      - name: Resolve .config and dump key symbols
+        run: |
+          make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 exynos980-a51x_defconfig
+          echo "=== .config key symbols ==="
+          grep -E 'FLUID_RT|RT_GROUP_SCHED|SCHED_EMS|EXYNOS' .config | head -20
+
       - name: Fetch 4G EA8076 POC source tables
         run: |
           cd drivers/video/fbdev/exynos/panel/ea8076

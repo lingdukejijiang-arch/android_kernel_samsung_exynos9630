@@ -34,9 +34,13 @@ jobs:
 
       - name: Resolve .config and dump key symbols
         run: |
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-android-
+          export CLANG_TRIPLE=aarch64-linux-gnu-
+          export PATH=$HOME/toolchain/clang/bin:$HOME/toolchain/aarch64-linux-android-4.9/bin:$PATH
           make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 exynos980-a51x_defconfig
           echo "=== .config key symbols ==="
-          grep -E 'FLUID_RT|RT_GROUP_SCHED|SCHED_EMS|EXYNOS' .config | head -20
+          grep -E 'FLUID_RT|RT_GROUP_SCHED|SCHED_EMS' .config
 
       - name: Fetch 4G EA8076 POC source tables
         run: |

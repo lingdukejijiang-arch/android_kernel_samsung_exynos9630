@@ -67,8 +67,12 @@ jobs:
           export ARCH=arm64
           export CROSS_COMPILE=$HOME/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-
           export CLANG_TRIPLE=aarch64-linux-gnu-
-          # gcc 4.9 bin 进 PATH + GCC_TOOLCHAIN 双保险: clang 靠它定位 aarch64-linux-android-as
+          # gcc 4.9 bin 进 PATH + 兜底: Makefile 用 `which $(CROSS_COMPILE)elfedit` 定位工具链,
+          # 若 prebuilt 缺 elfedit 则用宿主 /usr/bin/elfedit 补符号链接(仅用于路径探测)
           export PATH=$HOME/toolchain/clang/bin:$HOME/toolchain/aarch64-linux-android-4.9/bin:$PATH
+          ls -la $HOME/toolchain/aarch64-linux-android-4.9/bin/ | head -40
+          which aarch64-linux-android-elfedit || ln -sf /usr/bin/elfedit $HOME/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-elfedit
+          which aarch64-linux-android-elfedit
           export KCFLAGS="-Wno-gnu-variable-sized-type-not-at-end"
           make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 exynos980-a51x_defconfig
           make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 -j$(nproc)

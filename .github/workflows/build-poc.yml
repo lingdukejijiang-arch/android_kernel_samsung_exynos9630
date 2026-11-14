@@ -33,6 +33,9 @@ jobs:
           echo '# CONFIG_LOCALVERSION_AUTO is not set' >> exynos980-a51x_defconfig
           sed -i 's/^# CONFIG_SUPPORT_DDI_FLASH is not set/CONFIG_SUPPORT_DDI_FLASH=y\nCONFIG_SUPPORT_POC_FLASH=y/' exynos980-a51x_defconfig
           sed -i 's/^# CONFIG_SECURITYFS is not set/CONFIG_SECURITYFS=y/' exynos980-a51x_defconfig
+          echo 'CONFIG_TMPFS_SECURITY=y' >> exynos980-a51x_defconfig
+          echo 'CONFIG_IKCONFIG=y' >> exynos980-a51x_defconfig
+          echo 'CONFIG_IKCONFIG_PROC=y' >> exynos980-a51x_defconfig
           sed -i 's/^CONFIG_SND_SOC_SAMSUNG_ABOX=y/# CONFIG_SND_SOC_SAMSUNG_ABOX is not set/' exynos980-a51x_defconfig
           sed -i 's/^CONFIG_SND_SOC_SAMSUNG_VTS=y/# CONFIG_SND_SOC_SAMSUNG_VTS is not set/' exynos980-a51x_defconfig
           sed -i 's/^CONFIG_SND_SOC_SAMSUNG_MAILBOX=y/# CONFIG_SND_SOC_SAMSUNG_MAILBOX is not set/' exynos980-a51x_defconfig
@@ -49,6 +52,7 @@ jobs:
           sed -i 's/^CONFIG_SND_EXYNOS_USB_AUDIO=y/# CONFIG_SND_EXYNOS_USB_AUDIO is not set/' exynos980-a51x_defconfig
           grep -n 'ABOX\|TAS2562\|RADIO_S610\|AUD3003X\|SND_SOC_SAMSUNG_AUDIO' exynos980-a51x_defconfig || true
           grep -n 'LOCALVERSION\|SUPPORT_DDI_FLASH\|SUPPORT_POC_FLASH' exynos980-a51x_defconfig
+          grep -n 'TMPFS_SECURITY\|IKCONFIG' exynos980-a51x_defconfig
           cd ../../..
           sed -i 's/phys_addr_t addr, size_t bytes, void \*addr)/phys_addr_t addr, size_t bytes, void *vaddr)/' include/sound/samsung/abox.h
           grep -n 'void \*vaddr)' include/sound/samsung/abox.h

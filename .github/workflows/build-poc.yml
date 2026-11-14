@@ -32,6 +32,7 @@ jobs:
           echo 'CONFIG_LOCALVERSION="-27197889"' >> exynos980-a51x_defconfig
           echo '# CONFIG_LOCALVERSION_AUTO is not set' >> exynos980-a51x_defconfig
           sed -i 's/^# CONFIG_SUPPORT_DDI_FLASH is not set/CONFIG_SUPPORT_DDI_FLASH=y\nCONFIG_SUPPORT_POC_FLASH=y/' exynos980-a51x_defconfig
+          sed -i 's/^# CONFIG_SECURITYFS is not set/CONFIG_SECURITYFS=y/' exynos980-a51x_defconfig
           sed -i 's/^CONFIG_SND_SOC_SAMSUNG_ABOX=y/# CONFIG_SND_SOC_SAMSUNG_ABOX is not set/' exynos980-a51x_defconfig
           sed -i 's/^CONFIG_SND_SOC_SAMSUNG_VTS=y/# CONFIG_SND_SOC_SAMSUNG_VTS is not set/' exynos980-a51x_defconfig
           sed -i 's/^CONFIG_SND_SOC_SAMSUNG_MAILBOX=y/# CONFIG_SND_SOC_SAMSUNG_MAILBOX is not set/' exynos980-a51x_defconfig
@@ -124,7 +125,7 @@ jobs:
           which aarch64-linux-android-elfedit || ln -sf /usr/bin/elfedit $HOME/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-elfedit
           export KCFLAGS="-Wno-gnu-variable-sized-type-not-at-end"
           make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 exynos980-a51x_defconfig
-          make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 KCFLAGS="-Wno-gnu-variable-sized-type-not-at-end -Wno-error=unused-function -Wno-error=unused-variable" -j$(nproc)
+          make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 KCFLAGS="-Wno-error=unused-function -Wno-error=unused-variable" -j$(nproc)
           echo "=== utsrelease check ==="
           strings arch/arm64/boot/Image | grep -m3 "4.19" || true
 

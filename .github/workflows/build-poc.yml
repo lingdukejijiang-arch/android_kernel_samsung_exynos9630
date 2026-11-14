@@ -1,0 +1,129 @@
+name: POC test (vanilla + vermagic fix + POC flash patch)
+
+on:
+  push:
+    branches: [test-poc]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-core gnupg flex bison gperf build-essential \
+            zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
+            libncurses-dev x11proto-core-dev libx11-dev \
+            lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip python3
+          mkdir -p $HOME/toolchain
+          cd $HOME/toolchain
+          curl -L -o clang-r353983c.tar.gz https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-10.0.0_r47/clang-r353983c.tar.gz
+          mkdir clang && tar -xzf clang-r353983c.tar.gz -C clang
+          git clone --depth 1 -b android-10.0.0_r47 https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9
+          ls $HOME/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-as
+
+      - name: Align version string with stock and disable module gates
+        run: |
+          cd arch/arm64/configs
+          sed -i '/^CONFIG_LOCALVERSION=/d' exynos980-a51x_defconfig
+          sed -i '/^CONFIG_LOCALVERSION_AUTO=/d' exynos980-a51x_defconfig
+          echo 'CONFIG_LOCALVERSION="-27197889"' >> exynos980-a51x_defconfig
+          echo '# CONFIG_LOCALVERSION_AUTO is not set' >> exynos980-a51x_defconfig
+          sed -i 's/^# CONFIG_SUPPORT_DDI_FLASH is not set/CONFIG_SUPPORT_DDI_FLASH=y\nCONFIG_SUPPORT_POC_FLASH=y/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_SND_SOC_SAMSUNG_ABOX=y/# CONFIG_SND_SOC_SAMSUNG_ABOX is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_SND_SOC_SAMSUNG_VTS=y/# CONFIG_SND_SOC_SAMSUNG_VTS is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_SND_SOC_SAMSUNG_MAILBOX=y/# CONFIG_SND_SOC_SAMSUNG_MAILBOX is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_RADIO_S610=y/# CONFIG_RADIO_S610 is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_RADIO_S5E9630=y/# CONFIG_RADIO_S5E9630 is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_SND_SOC_TAS2562=y/# CONFIG_SND_SOC_TAS2562 is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_TAS2562_REGMAP=y/# CONFIG_TAS2562_REGMAP is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_TAS2562_CODEC=y/# CONFIG_TAS2562_CODEC is not set/' exynos980-a51x_defconfig
+          grep -n 'ABOX\|TAS2562\|RADIO_S610' exynos980-a51x_defconfig || true
+          grep -n 'LOCALVERSION\|SUPPORT_DDI_FLASH\|SUPPORT_POC_FLASH' exynos980-a51x_defconfig
+          cd ../../..
+          python3 - <<'PYEOF'
+          p = 'kernel/module.c'
+          s = open(p).read()
+          a = 'if (!check_version(info, name, mod, crc)) {'
+          b = 'if (0 && !check_version(info, name, mod, crc)) {'
+          assert s.count(a) == 1, ('per-symbol gate', s.count(a))
+          s = s.replace(a, b)
+          a = 'return check_version(info, "module_layout", mod, crc);'
+          b = 'return 1; /* module_layout crc bypass */'
+          assert s.count(a) == 1, ('modstruct gate', s.count(a))
+          s = s.replace(a, b)
+          a = 'return strcmp(amagic, bmagic) == 0;'
+          b = 'return 1; /* vermagic bypass */'
+          assert s.count(a) == 2, ('vermagic', s.count(a))
+          s = s.replace(a, b)
+          open(p, 'w').write(s)
+          print('module.c gates disabled OK')
+          PYEOF
+
+      - name: Fetch 4G EA8076 POC source tables
+        run: |
+          cd drivers/video/fbdev/exynos/panel/ea8076
+          curl -fsSL https://raw.githubusercontent.com/ianmacd/a51xx/0e8948ae59992d7a29d0e9818184f1d803d5ebf7/drivers/video/fbdev/exynos/dpu20/panels/ea8076_a51_poc.h -o ea8076_a51_poc_old.h
+          head -20 ea8076_a51_poc_old.h
+
+      - name: Generate EA8076 POC command tables
+        run: |
+          cd drivers/video/fbdev/exynos/panel/ea8076
+          python3 gen_packets.py
+          ls -la ea8076_a51_poc_tables.h
+
+      - name: Patch ea8076_a51x_panel.h
+        run: |
+          cd drivers/video/fbdev/exynos/panel/ea8076
+          python3 - <<'PYEOF'
+          p = 'ea8076_a51x_panel.h'
+          s = open(p).read()
+          old_inc = '#ifdef CONFIG_DYNAMIC_FREQ\n#include "a51x_df_tbl.h"\n#endif'
+          new_inc = old_inc + '\n\n#ifdef CONFIG_SUPPORT_POC_FLASH\n#include "ea8076_a51x_panel_poc.h"\n#endif'
+          assert s.count(old_inc) == 1, 'include anchor not found'
+          s = s.replace(old_inc, new_inc, 1)
+          old_dd = '\t.nr_dumpinfo = ARRAY_SIZE(ea8076_dmptbl),'
+          new_dd = old_dd + '\n#ifdef CONFIG_SUPPORT_DDI_FLASH\n\t.poc_data = &ea8076_a51x_poc_data,\n#endif'
+          assert s.count(old_dd) == 1, 'poc_data anchor not found'
+          s = s.replace(old_dd, new_dd, 1)
+          open(p, 'w').write(s)
+          print('patched OK')
+          PYEOF
+
+      - name: Neutralize upstream-disabled frt tracepoint calls
+        run: |
+          cd kernel/sched/ems
+          python3 - <<'PYEOF'
+          p = 'frt.c'
+          s = open(p).read()
+          old = 'trace_frt_load_rt_rq(rt_rq);'
+          new = '/* tracepoint disabled upstream */'
+          n = s.count(old)
+          assert n == 4, f'expected 4 call sites, found {n}'
+          s = s.replace(old, new)
+          open(p, 'w').write(s)
+          print(f'neutralized {n} call sites')
+          PYEOF
+
+      - name: Build kernel
+        run: |
+          export ARCH=arm64
+          export CROSS_COMPILE=$HOME/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-
+          export CLANG_TRIPLE=aarch64-linux-gnu-
+          export PATH=$HOME/toolchain/clang/bin:$HOME/toolchain/aarch64-linux-android-4.9/bin:$PATH
+          which aarch64-linux-android-elfedit || ln -sf /usr/bin/elfedit $HOME/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-elfedit
+          export KCFLAGS="-Wno-gnu-variable-sized-type-not-at-end"
+          make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 exynos980-a51x_defconfig
+          make CC=clang CROSS_COMPILE=aarch64-linux-android- CLANG_TRIPLE=aarch64-linux-gnu- GCC_TOOLCHAIN=$HOME/toolchain/aarch64-linux-android-4.9 -j$(nproc)
+          echo "=== utsrelease check ==="
+          strings arch/arm64/boot/Image | grep -m3 "4.19" || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-poc
+          path: |
+            arch/arm64/boot/Image
+            vmlinux

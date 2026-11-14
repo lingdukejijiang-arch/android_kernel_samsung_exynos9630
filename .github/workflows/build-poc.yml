@@ -40,7 +40,13 @@ jobs:
           sed -i 's/^CONFIG_SND_SOC_TAS2562=y/# CONFIG_SND_SOC_TAS2562 is not set/' exynos980-a51x_defconfig
           sed -i 's/^CONFIG_TAS2562_REGMAP=y/# CONFIG_TAS2562_REGMAP is not set/' exynos980-a51x_defconfig
           sed -i 's/^CONFIG_TAS2562_CODEC=y/# CONFIG_TAS2562_CODEC is not set/' exynos980-a51x_defconfig
-          grep -n 'ABOX\|TAS2562\|RADIO_S610' exynos980-a51x_defconfig || true
+          sed -i 's/^CONFIG_SND_SOC_SAMSUNG_EXYNOS9630_AUD3003X=y/# CONFIG_SND_SOC_SAMSUNG_EXYNOS9630_AUD3003X is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_SND_SOC_AUD3003X=y/# CONFIG_SND_SOC_AUD3003X is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_SND_SOC_SAMSUNG_AUDIO=y/# CONFIG_SND_SOC_SAMSUNG_AUDIO is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_SND_SOC_SAMSUNG_SYSFS_EARJACK=y/# CONFIG_SND_SOC_SAMSUNG_SYSFS_EARJACK is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_SND_SOC_TAS25XX_ALGO=y/# CONFIG_SND_SOC_TAS25XX_ALGO is not set/' exynos980-a51x_defconfig
+          sed -i 's/^CONFIG_SND_EXYNOS_USB_AUDIO=y/# CONFIG_SND_EXYNOS_USB_AUDIO is not set/' exynos980-a51x_defconfig
+          grep -n 'ABOX\|TAS2562\|RADIO_S610\|AUD3003X\|SND_SOC_SAMSUNG_AUDIO' exynos980-a51x_defconfig || true
           grep -n 'LOCALVERSION\|SUPPORT_DDI_FLASH\|SUPPORT_POC_FLASH' exynos980-a51x_defconfig
           cd ../../..
           python3 - <<'PYEOF'

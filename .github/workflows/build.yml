@@ -1,0 +1,80 @@
+name: Build A51 5G kernel with POC flash support
+
+on:
+  push:
+    branches: [lineage-21]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-core gnupg flex bison gperf build-essential \
+            zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
+            libncurses5 lib32ncurses5-dev x11proto-core-dev libx11-dev \
+            lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip python3
+          mkdir -p $HOME/toolchain
+          cd $HOME/toolchain
+          # Android clang r353983c (matches stock kernel build)
+          curl -L -o clang-r353983c.tar.gz https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-10.0.0_r47/clang-r353983c.tar.gz
+          mkdir clang && tar -xzf clang-r353983c.tar.gz -C clang
+          # aarch64 gcc 4.9
+          git clone --depth 1 https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9
+
+      - name: Enable POC flash configs
+        run: |
+          cd arch/arm64/configs
+          sed -i 's/^# CONFIG_SUPPORT_DDI_FLASH is not set/CONFIG_SUPPORT_DDI_FLASH=y\nCONFIG_SUPPORT_POC_FLASH=y/' exynos980-a51x_defconfig
+          grep -n 'SUPPORT_DDI_FLASH\|SUPPORT_POC_FLASH' exynos980-a51x_defconfig
+
+      - name: Fetch 4G EA8076 POC source tables
+        run: |
+          cd drivers/video/fbdev/exynos/panel/ea8076
+          curl -fsSL https://raw.githubusercontent.com/ianmacd/a51xx/0e8948ae59992d7a29d0e9818184f1d803d5ebf7/drivers/video/fbdev/exynos/dpu20/panels/ea8076_a51_poc.h -o ea8076_a51_poc_old.h
+          head -20 ea8076_a51_poc_old.h
+
+      - name: Generate EA8076 POC command tables
+        run: |
+          cd drivers/video/fbdev/exynos/panel/ea8076
+          python3 gen_packets.py
+          ls -la ea8076_a51_poc_tables.h
+
+      - name: Patch ea8076_a51x_panel.h
+        run: |
+          cd drivers/video/fbdev/exynos/panel/ea8076
+          python3 - <<'PYEOF'
+          p = 'ea8076_a51x_panel.h'
+          s = open(p).read()
+          old_inc = '#ifdef CONFIG_DYNAMIC_FREQ\n#include "a51x_df_tbl.h"\n#endif'
+          new_inc = old_inc + '\n\n#ifdef CONFIG_SUPPORT_POC_FLASH\n#include "ea8076_a51x_panel_poc.h"\n#endif'
+          assert s.count(old_inc) == 1, 'include anchor not found'
+          s = s.replace(old_inc, new_inc, 1)
+          old_dd = '\t.nr_dumpinfo = ARRAY_SIZE(ea8076_dmptbl),'
+          new_dd = old_dd + '\n#ifdef CONFIG_SUPPORT_DDI_FLASH\n\t.poc_data = &ea8076_a51x_poc_data,\n#endif'
+          assert s.count(old_dd) == 1, 'poc_data anchor not found'
+          s = s.replace(old_dd, new_dd, 1)
+          open(p, 'w').write(s)
+          print('patched OK')
+          PYEOF
+          grep -n 'ea8076_a51x_panel_poc.h\|poc_data' ea8076_a51x_panel.h
+
+      - name: Build kernel
+        run: |
+          export ARCH=arm64
+          export CROSS_COMPILE=$HOME/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-
+          export CLANG_TRIPLE=aarch64-linux-gnu-
+          export PATH=$HOME/toolchain/clang/bin:$PATH
+          make CC=clang exynos980-a51x_defconfig
+          make CC=clang -j$(nproc)
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-image
+          path: |
+            arch/arm64/boot/Image
+            vmlinux

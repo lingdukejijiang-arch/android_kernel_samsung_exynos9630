@@ -22,8 +22,9 @@ jobs:
           # Android clang r353983c (matches stock kernel build)
           curl -L -o clang-r353983c.tar.gz https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-10.0.0_r47/clang-r353983c.tar.gz
           mkdir clang && tar -xzf clang-r353983c.tar.gz -C clang
-          # aarch64 gcc 4.9
-          git clone --depth 1 https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9
+          # aarch64 gcc 4.9 (master 分支已被 AOSP 清空,必须锁历史分支 android-10.0.0_r47)
+          git clone --depth 1 -b android-10.0.0_r47 https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9
+          ls $HOME/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-as
 
       - name: Enable POC flash configs
         run: |
